@@ -51,3 +51,64 @@ test("health is public", async (t) => {
   assert.equal(result.status, 200)
   assert.match(result.text, /"ok":true/)
 })
+
+function unwrap(response) {
+  const body = JSON.parse(response.text)
+  return body
+}
+
+test("lists sessions through the official sessions api", async (t) => {
+  const api = {
+    sessions: { list: async ({ payload }) => ({ rpcId: "rpc-1", result: { ok: true, value: { items: [{ sessionId: payload.cursor ?? "s1" }] } } }) },
+    events: { mux: async function* () {} }
+  }
+  const server = createDshApiServer({ api, fetch: fakeFetch, token: "secret-token", port: 0 })
+  server.listen(0, "127.0.0.1")
+  t.after(() => server.close())
+  await once(server, "listening")
+  const result = await request(server, "/api/sessions", "secret-token")
+  assert.equal(result.status, 200)
+  assert.equal(unwrap(result).items[0].sessionId, "s1")
+})
+
+test("prompt maps body text into official prompt content", async (t) => {
+  let seen = null
+  const api = {
+    sessions: { prompt: async (request) => { seen = request; return { rpcId: "rpc-1", result: { ok: true, value: { accepted: true } } } } },
+    events: { mux: async function* () {} }
+  }
+  const server = createDshApiServer({ api, fetch: fakeFetch, token: "secret-token", port: 0 })
+  server.listen(0, "127.0.0.1")
+  t.after(() => server.close())
+  await once(server, "listening")
+  const address = server.address()
+  const response = await fetch(`http://127.0.0.1:${address.port}/api/sessions/s1/prompt`, {
+    method: "POST",
+    headers: { authorization: "Bearer secret-token", "content-type": "application/json" },
+    body: JSON.stringify({ content: [{ type: "text", text: "hello" }], mode: "queue" })
+  })
+  assert.equal(response.status, 200)
+  assert.deepEqual(seen.payload.content, [{ type: "text", text: "hello" }])
+  assert.equal(seen.payload.mode, "queue")
+})
+
+test("stream filters mux frames by session id", async (t) => {
+  const api = {
+    sessions: {},
+    events: { mux: async function* () {
+      yield { rpcId: "rpc-1", payload: { type: "session/subscribed", sessionId: "s1", lastSeq: -1 } }
+      yield { rpcId: "rpc-2", payload: { type: "session/subscribed", sessionId: "s2", lastSeq: -1 } }
+    } }
+  }
+  const server = createDshApiServer({ api, fetch: fakeFetch, token: "secret-token", port: 0 })
+  server.listen(0, "127.0.0.1")
+  t.after(() => server.close())
+  await once(server, "listening")
+  const address = server.address()
+  const response = await fetch(`http://127.0.0.1:${address.port}/api/sessions/s1/stream`, {
+    headers: { authorization: "Bearer secret-token" }
+  })
+  const text = await response.text()
+  assert.match(text, /"sessionId":"s1"/)
+  assert.doesNotMatch(text, /"sessionId":"s2"/)
+})
