@@ -171,6 +171,20 @@ test("cancel maps sessionId from path", async (t) => {
   assert.equal(seen.payload.sessionId, "s7")
 })
 
+test("sendRpc guards a missing result with HTTP 200 and internal error", async (t) => {
+  const api = {
+    sessions: { list: async () => ({ rpcId: "rpc-1" }) },
+    events: { mux: async function* () {} }
+  }
+  const server = createDshApiServer({ api, fetch: fakeFetch, token: "secret-token", port: 0 })
+  server.listen(0, "127.0.0.1")
+  t.after(() => server.close())
+  await once(server, "listening")
+  const result = await request(server, "/api/sessions", "secret-token")
+  assert.equal(result.status, 200)
+  assert.deepEqual(unwrap(result), { ok: false, error: { code: "internal", message: "missing rpc result" } })
+})
+
 test("sendRpc error branch returns official error with HTTP 200", async (t) => {
   const api = {
     sessions: { list: async () => ({ rpcId: "rpc-1", result: { ok: false, error: { code: "session-missing", message: "no such session" } } }) },

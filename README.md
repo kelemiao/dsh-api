@@ -49,6 +49,10 @@ server from those resolved settings. Settings changes apply live.
 | POST   | `/api/*`          | Forwards the official JSON RPC envelope.       |
 | GET    | `/api/events.mux` | Forwards the official aggregated SSE stream.   |
 
+Convenience session routes take precedence over the raw passthrough; every other
+request whose path starts with `/api/` is forwarded verbatim to the official
+ApiProxy transport, including `POST /api/*` and `GET /api/events.mux`.
+
 This is the long-term extension point. New domains become available as soon
 as the official `ApiProxy` grows them.
 
