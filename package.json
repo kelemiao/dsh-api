@@ -13,7 +13,7 @@
   "files": ["lib/index.js", "lib/client.js"],
   "keywords": ["dsh", "dsh-plugin", "deepseek-harness", "api", "agent", "ai-agents", "sse"],
   "license": "MIT",
-  "scripts": { "test": "node --test test/" },
+  "scripts": { "test": "node --test" },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
     "@deepseek-ai/dsh-host-apiproxy": "^0.1.0-rc.6",

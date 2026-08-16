@@ -14,7 +14,8 @@ test("schema accepts a valid section and rejects a bad port", () => {
   assert.equal(SETTINGS_NAMESPACE_RAW, "dsh-api")
   const value = DshApiSettingsSchema({ enabled: false, port: 5000, token: "0123456789abcdef" })
   assert.equal(value.port, 5000)
-  assert.throws(() => DshApiSettingsSchema({ port: 80 }))
+  assert.throws(() => DshApiSettingsSchema({ port: 0 }))
+  assert.throws(() => DshApiSettingsSchema({ port: 65536 }))
 })
 
 test("entry token wins over the generated fallback", () => {

@@ -16,8 +16,10 @@ changing the plugin architecture.
 Install the plugin into a DSH web profile and enable it via a cordis patch:
 
 ```bash
-dsh plugin --profile web add link:.
+dsh plugin --profile web add link:C:/path/to/dsh-api
 ```
+
+Replace `C:/path/to/dsh-api` with the local checkout path of this repository.
 
 ```jsonc
 {
@@ -60,7 +62,6 @@ as the official `ApiProxy` grows them.
 | POST   | `/api/sessions/:id/prompt` | Body `{ content: [{ type: 'text', text }], mode?: 'queue' | 'steer' }`; returns `{ accepted: true }`. |
 | POST   | `/api/sessions/:id/cancel` | Returns `{ accepted: true }`.                                 |
 | GET    | `/api/sessions/:id/stream` | Server-sent events filtered to the requested session.         |
-| GET    | `/health`                  | Returns `{ ok: true, dshApi: true }` without authentication.  |
 
 A prompt whose single text block starts with `/` is treated by DSH as a
 slash command, matching GUI behavior.
@@ -68,6 +69,7 @@ slash command, matching GUI behavior.
 ## Authentication
 
 Send `Authorization: Bearer <token>` on every request except `/health`.
+The unauthenticated `GET /health` endpoint returns `{ ok: true, dshApi: true }`.
 Missing or wrong tokens receive `401` with a JSON error body. The server
 binds `127.0.0.1` only; the settings schema rejects empty tokens and ports
 outside 1-65535.

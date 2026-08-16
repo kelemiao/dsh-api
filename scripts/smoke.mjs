@@ -6,10 +6,13 @@ async function rpc(path, init = {}) {
   const response = await fetch(base + path, { ...init, headers: { authorization: `Bearer ${token}`, ...(init.headers || {}) } })
   const text = await response.text()
   console.log(path, response.status, text.slice(0, 200))
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${text.slice(0, 400)}`)
   return { response, text }
 }
 
 const list = await rpc("/api/sessions")
+const parsed = JSON.parse(list.text)
+if (!Array.isArray(parsed.items)) throw new Error(`expected items array, got ${JSON.stringify(parsed).slice(0, 400)}`)
 const created = await rpc("/api/sessions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({}) })
 const sessionId = JSON.parse(created.text).sessionId
 await rpc(`/api/sessions/${sessionId}/prompt`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ content: [{ type: "text", text: "Say OK" }] }) })
