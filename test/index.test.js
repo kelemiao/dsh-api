@@ -31,3 +31,13 @@ test("apply with enabled=false installs the lifecycle effect and starts no serve
   const dispose = await effects[0]()
   assert.equal(typeof dispose, "function")
 })
+
+test("apply with enabled=true runs the effect, returns a disposer, and disposing does not throw", async () => {
+  const { ctx, effects } = makeCtx({ sessions: {}, events: {} })
+  apply(ctx, { enabled: true, port: 0, token: "test-token-123456" })
+  assert.equal(effects.length, 1)
+  const dispose = await effects[0]()
+  await new Promise((resolve) => setTimeout(resolve, 150))
+  assert.equal(typeof dispose, "function")
+  assert.doesNotThrow(() => dispose())
+})
