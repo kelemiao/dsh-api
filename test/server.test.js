@@ -112,3 +112,75 @@ test("stream filters mux frames by session id", async (t) => {
   assert.match(text, /"sessionId":"s1"/)
   assert.doesNotMatch(text, /"sessionId":"s2"/)
 })
+
+test("history returns official value and path sessionId wins over query param", async (t) => {
+  let seen = null
+  const api = {
+    sessions: { history: async (request) => { seen = request; return { rpcId: "rpc-1", result: { ok: true, value: { messages: [{ role: "user", content: "hi" }] } } } } },
+    events: { mux: async function* () {} }
+  }
+  const server = createDshApiServer({ api, fetch: fakeFetch, token: "secret-token", port: 0 })
+  server.listen(0, "127.0.0.1")
+  t.after(() => server.close())
+  await once(server, "listening")
+  const result = await request(server, "/api/sessions/s1/history?sessionId=evil&cursor=abc", "secret-token")
+  assert.equal(result.status, 200)
+  assert.equal(unwrap(result).messages[0].content, "hi")
+  assert.equal(seen.payload.sessionId, "s1")
+  assert.equal(seen.payload.cursor, "abc")
+})
+
+test("create maps request body into official create payload", async (t) => {
+  let seen = null
+  const api = {
+    sessions: { create: async (request) => { seen = request; return { rpcId: "rpc-1", result: { ok: true, value: { sessionId: "s9" } } } } },
+    events: { mux: async function* () {} }
+  }
+  const server = createDshApiServer({ api, fetch: fakeFetch, token: "secret-token", port: 0 })
+  server.listen(0, "127.0.0.1")
+  t.after(() => server.close())
+  await once(server, "listening")
+  const address = server.address()
+  const response = await fetch(`http://127.0.0.1:${address.port}/api/sessions`, {
+    method: "POST",
+    headers: { authorization: "Bearer secret-token", "content-type": "application/json" },
+    body: JSON.stringify({ title: "new session" })
+  })
+  assert.equal(response.status, 200)
+  assert.equal(unwrap({ text: await response.text() }).sessionId, "s9")
+  assert.deepEqual(seen.payload, { title: "new session" })
+})
+
+test("cancel maps sessionId from path", async (t) => {
+  let seen = null
+  const api = {
+    sessions: { cancel: async (request) => { seen = request; return { rpcId: "rpc-1", result: { ok: true, value: { cancelled: true } } } } },
+    events: { mux: async function* () {} }
+  }
+  const server = createDshApiServer({ api, fetch: fakeFetch, token: "secret-token", port: 0 })
+  server.listen(0, "127.0.0.1")
+  t.after(() => server.close())
+  await once(server, "listening")
+  const address = server.address()
+  const response = await fetch(`http://127.0.0.1:${address.port}/api/sessions/s7/cancel`, {
+    method: "POST",
+    headers: { authorization: "Bearer secret-token" }
+  })
+  assert.equal(response.status, 200)
+  assert.deepEqual(unwrap({ text: await response.text() }), { cancelled: true })
+  assert.equal(seen.payload.sessionId, "s7")
+})
+
+test("sendRpc error branch returns official error with HTTP 200", async (t) => {
+  const api = {
+    sessions: { list: async () => ({ rpcId: "rpc-1", result: { ok: false, error: { code: "session-missing", message: "no such session" } } }) },
+    events: { mux: async function* () {} }
+  }
+  const server = createDshApiServer({ api, fetch: fakeFetch, token: "secret-token", port: 0 })
+  server.listen(0, "127.0.0.1")
+  t.after(() => server.close())
+  await once(server, "listening")
+  const result = await request(server, "/api/sessions", "secret-token")
+  assert.equal(result.status, 200)
+  assert.deepEqual(unwrap(result), { ok: false, error: { code: "session-missing", message: "no such session" } })
+})
