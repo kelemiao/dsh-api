@@ -10,7 +10,7 @@
     "./client": "./lib/client.js",
     "./package.json": "./package.json"
   },
-  "files": ["lib/index.js", "lib/client.js"],
+  "files": ["lib", "scripts/smoke.mjs"],
   "keywords": ["dsh", "dsh-plugin", "deepseek-harness", "api", "agent", "ai-agents", "sse"],
   "license": "MIT",
   "scripts": { "test": "node --test" },
