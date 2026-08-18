@@ -1,0 +1,12 @@
+# dsh-api bundle patch: inserts the dual-face plugin row into the profile
+# roster. Applied as a profile bundle layer (the `dsh.bundle.patch` manifest
+# field) over dsh-base; activate with
+# `dsh plugin --profile <name> add dsh-api`.
+#
+# The row is a bare plugin by package name: the node half (exports ".")
+# runs in the host process (the local HTTP API server), and the `dsh.client`
+# declaration in package.json makes the browser half (exports "./client",
+# served at /plugins/<id>/client.js) load in the web GUI settings page.
+- insert:
+    - id: dsh-api
+      name: 'dsh-api'

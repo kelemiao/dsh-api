@@ -15,15 +15,10 @@ Install the plugin into a DSH web profile:
 dsh plugin --profile web add link:C:/path/to/dsh-api
 ```
 
-Enable it in the profile cordis patch:
-
-```jsonc
-{
-  "plugins": {
-    "dsh-api": {}
-  }
-}
-```
+The package declares `dsh.bundle.patch`, so `dsh plugin` registers it in the
+profile's `dsh.profile.bundles` automatically. No manual cordis patch is
+needed. Once published, install from the registry with
+`dsh plugin --profile web add dsh-api`.
 
 Settings live in the GUI Settings page under `dsh-api` and apply immediately.
 

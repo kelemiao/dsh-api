@@ -8,9 +8,10 @@
   "exports": {
     ".": "./lib/index.js",
     "./client": "./lib/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json"
   },
-  "files": ["lib", "scripts/smoke.mjs"],
+  "files": ["lib", "scripts/smoke.mjs", "cordis.patch.yml"],
   "keywords": ["dsh", "dsh-plugin", "deepseek-harness", "api", "agent", "ai-agents", "sse"],
   "license": "MIT",
   "scripts": { "test": "node --test" },
@@ -21,6 +22,9 @@
     "@deepseek-ai/schemastery": "^3.18.1"
   },
   "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
     "client": {
       "inject": [
         "@deepseek-ai/dsh-client-runtime",
