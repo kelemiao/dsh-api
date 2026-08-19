@@ -13,5 +13,6 @@ test("package declares an official dsh bundle patch", async () => {
   assert.equal(patch, "./cordis.patch.yml", "dsh.bundle.patch must point at the patch file")
   assert.ok(pkg.files.some((f) => f.replace(/^\.\//, "") === patch.replace(/^\.\//, "")), "files must ship the patch file")
   const content = await readFile(new URL("../cordis.patch.yml", import.meta.url), "utf8")
-  assert.match(content, /name: 'dsh-api'/, "patch must insert the dsh-api row")
+  assert.match(content, /id: dsh-api/, "patch must insert the dsh-api row")
+  assert.match(content, /name: '@kelemiao\/dsh-api'/, "patch row must resolve the scoped package")
 })

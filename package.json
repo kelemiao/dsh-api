@@ -1,6 +1,6 @@
 {
-  "name": "dsh-api",
-  "version": "0.1.0",
+  "name": "@kelemiao/dsh-api",
+  "version": "0.1.1",
   "description": "Local HTTP API for DeepSeek Harness: expose DSH session control to other agents",
   "publishConfig": { "access": "public" },
   "type": "module",
